@@ -1,8 +1,13 @@
 import requests
 import json
 import time
+from pandas import DataFrame
+import matplotlib.pyplot as plt
+from dateutil.parser import parse
 
 DEFAULT_URL = "https://api.github.com"
+JSON_NAME = "dados_brutos.json"
+
 
 class PullRequest:
     def __init__(self, id, url, number, state, title, body, created_at, updated_at=None, close_at=None, merged_at=None, **args):
@@ -12,10 +17,24 @@ class PullRequest:
         self.state = state
         self.title = title
         self.body = body
-        self.created_at = created_at
+        self.created_at = parse(created_at)
         self.updated_at = updated_at
         self.close_at = close_at
         self.merged_at = merged_at
+
+    def to_dict(self):
+        return{
+            'id':self.id,
+            'url':self.url,
+            'number':self.number,
+            'state':self.state,
+            'title':self.title,
+            'body':self.body,
+            'created_at':self.created_at,
+            'updated_at':self.updated_at,
+            'close_at':self.close_at,
+            'merged_at':self.merged_at
+        }
 
 
 class GitHub:
@@ -48,6 +67,10 @@ class GitHub:
             else:
                 print('Você ainda tem {} requisições para se fazer'.format(remaining))
 
+    def save_pullrequests(self, json_response):
+        with open(JSON_NAME, 'w') as file:
+            json.dump(json_response, file)
+
     def get_pullrequests(self):
         url = DEFAULT_URL + ('/repos/%s/%s/pulls' % (self.owner, self.repo))
 
@@ -55,6 +78,8 @@ class GitHub:
 
         response = requests.get(url)
         if response.status_code == 200:
+            self.save_pullrequests(response.text)
+
             json_response = json.loads(response.text)
 
             pullrequests = [PullRequest(**pullrequest) for pullrequest in json_response]
@@ -64,4 +89,8 @@ class GitHub:
 
 if __name__ == '__main__':
     github = GitHub('PyGithub', 'PyGithub')
-    github.get_pullrequests()
+    pullrequests = github.get_pullrequests()
+    df = DataFrame.from_records([s.to_dict() for s in pullrequests])
+
+    plt.hist(df['created_at'], normed=1, facecolor='green')
+    plt.show()
