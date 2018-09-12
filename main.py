@@ -72,25 +72,45 @@ class GitHub:
             json.dump(json_response, file)
 
     def get_pullrequests(self):
-        url = DEFAULT_URL + ('/repos/%s/%s/pulls' % (self.owner, self.repo))
+        have_content = True
+        page_number = 1
+        pullrequests = []
 
-        self.get_ratelimit()
+        while have_content:
+            url = DEFAULT_URL + ('/repos/%s/%s/pulls?page=%d&per_page=100' % (self.owner, self.repo, page_number))
 
-        response = requests.get(url)
-        if response.status_code == 200:
-            self.save_pullrequests(response.text)
+            self.get_ratelimit()
 
-            json_response = json.loads(response.text)
+            response = requests.get(url)
 
-            pullrequests = [PullRequest(**pullrequest) for pullrequest in json_response]
+            if response.status_code == 200:
+                json_response = json.loads(response.text)
 
-            return pullrequests
+                if page_number == 1:
+                    self.save_pullrequests(json_response)
+
+                #Verifica se json está vazio
+                if not json_response:
+                    have_content = False
+                    continue
+
+                pullrequests.extend([PullRequest(**pullrequest) for pullrequest in json_response])
+
+                page_number += 1
+
+        return pullrequests
 
 
 if __name__ == '__main__':
-    github = GitHub('PyGithub', 'PyGithub')
+    github = GitHub('angular', 'angular')
     pullrequests = github.get_pullrequests()
+
     df = DataFrame.from_records([s.to_dict() for s in pullrequests])
 
-    plt.hist(df['created_at'], normed=1, facecolor='green')
+    plt.hist(df['created_at'], facecolor='green', align='mid')
+
+    plt.xlabel('Tempo')
+    plt.ylabel('Quantidade')
+    plt.title('PullRequests ao longo do tempo')
+
     plt.show()
