@@ -3,10 +3,11 @@ import json
 import time
 from pandas import DataFrame
 import matplotlib.pyplot as plt
-from dateutil.parser import parse
+
 
 DEFAULT_URL = "https://api.github.com"
-JSON_NAME = "dados_brutos.json"
+JSON_FILE_DATA = "dados_brutos.json"
+JSON_FILE_ALL_PR = "pullrequests.json"
 
 
 class PullRequest:
@@ -17,7 +18,7 @@ class PullRequest:
         self.state = state
         self.title = title
         self.body = body
-        self.created_at = parse(created_at)
+        self.created_at = created_at
         self.updated_at = updated_at
         self.close_at = close_at
         self.merged_at = merged_at
@@ -67,9 +68,13 @@ class GitHub:
             else:
                 print('Você ainda tem {} requisições para se fazer'.format(remaining))
 
-    def save_pullrequests(self, json_response):
-        with open(JSON_NAME, 'w') as file:
-            json.dump(json_response, file)
+    def save_pullrequests(self, object):
+        if type(object) == list and isinstance(object[0], PullRequest):
+            with open(JSON_FILE_ALL_PR, 'w') as file:
+                json.dump([o.__dict__ for o in object], file)
+        else:
+            with open(JSON_FILE_DATA, 'w') as file:
+                json.dump(object, file)
 
     def get_pullrequests(self):
         have_content = True
@@ -98,6 +103,7 @@ class GitHub:
 
                 page_number += 1
 
+        self.save_pullrequests(pullrequests)
         return pullrequests
 
 
