@@ -2,7 +2,7 @@ import requests
 import json
 import time
 import matplotlib.pyplot as plt
-from pandas import DataFrame
+import pandas as pd
 from requests.auth import HTTPBasicAuth
 
 DEFAULT_URL = "https://api.github.com"
@@ -77,7 +77,17 @@ class GitHub:
                 json.dump(object, file)
 
     def analysis_pullrequests(self):
-        self.get_pullrequests()
+        df = pd.DataFrame([s.to_dict() for s in self.get_pullrequests()])
+
+        df['created_at'] = pd.to_datetime(df['created_at'], format='%x')
+
+        df.groupby(pd.Grouper(key='created_at', freq='5M')).count().reset_index().plot(x='created_at', y='body', color='g')
+
+        plt.xlabel('Periódos')
+        plt.ylabel('Quantidade')
+        plt.title('PullRequests ao longo do Tempo(Angular)')
+
+        plt.show()
 
     def get_pullrequests(self):
         have_content = True
@@ -108,7 +118,7 @@ class GitHub:
                 page_number += 1
 
         self.save_pullrequests(pullrequests)
-        self.pullrequests = pullrequests
+        return pullrequests
 
 
 if __name__ == '__main__':
