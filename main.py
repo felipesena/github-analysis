@@ -1,9 +1,9 @@
 import requests
 import json
 import time
-from pandas import DataFrame
 import matplotlib.pyplot as plt
-
+from pandas import DataFrame
+from requests.auth import HTTPBasicAuth
 
 DEFAULT_URL = "https://api.github.com"
 JSON_FILE_DATA = "dados_brutos.json"
@@ -11,7 +11,7 @@ JSON_FILE_ALL_PR = "pullrequests.json"
 
 
 class PullRequest:
-    def __init__(self, id, url, number, state, title, body, created_at, updated_at=None, close_at=None, merged_at=None, **args):
+    def __init__(self, id, url, number, state, title, body, created_at, updated_at=None, closed_at=None, merged_at=None, **args):
         self.id = id
         self.url = url
         self.number = number
@@ -20,7 +20,7 @@ class PullRequest:
         self.body = body
         self.created_at = created_at
         self.updated_at = updated_at
-        self.close_at = close_at
+        self.closed_at = closed_at
         self.merged_at = merged_at
 
     def to_dict(self):
@@ -33,7 +33,7 @@ class PullRequest:
             'body':self.body,
             'created_at':self.created_at,
             'updated_at':self.updated_at,
-            'close_at':self.close_at,
+            'close_at':self.closed_at,
             'merged_at':self.merged_at
         }
 
@@ -46,7 +46,7 @@ class GitHub:
 
     def get_ratelimit(self):
         url = DEFAULT_URL + '/rate_limit'
-        response = requests.get(url)
+        response = requests.get(url, auth=HTTPBasicAuth('user','pass'))
 
         if response.status_code == 200:
             json_response = json.loads(response.text)
@@ -76,17 +76,21 @@ class GitHub:
             with open(JSON_FILE_DATA, 'w') as file:
                 json.dump(object, file)
 
+    def analysis_pullrequests(self):
+        self.get_pullrequests()
+
     def get_pullrequests(self):
         have_content = True
         page_number = 1
         pullrequests = []
+        parametes = {'state':'all'}
 
         while have_content:
             url = DEFAULT_URL + ('/repos/%s/%s/pulls?page=%d&per_page=100' % (self.owner, self.repo, page_number))
 
             self.get_ratelimit()
 
-            response = requests.get(url)
+            response = requests.get(url, auth=HTTPBasicAuth('user','pass'), params=parametes)
 
             if response.status_code == 200:
                 json_response = json.loads(response.text)
@@ -104,19 +108,11 @@ class GitHub:
                 page_number += 1
 
         self.save_pullrequests(pullrequests)
-        return pullrequests
+        self.pullrequests = pullrequests
 
 
 if __name__ == '__main__':
     github = GitHub('angular', 'angular')
-    pullrequests = github.get_pullrequests()
 
-    df = DataFrame.from_records([s.to_dict() for s in pullrequests])
+    github.analysis_pullrequests()
 
-    plt.hist(df['created_at'], facecolor='green', align='mid')
-
-    plt.xlabel('Tempo')
-    plt.ylabel('Quantidade')
-    plt.title('PullRequests ao longo do tempo')
-
-    plt.show()
