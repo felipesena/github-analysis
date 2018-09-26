@@ -77,15 +77,35 @@ class GitHub:
                 json.dump(object, file)
 
     def analysis_pullrequests(self):
-        df = pd.DataFrame([s.to_dict() for s in self.get_pullrequests()])
+        pullrequests = self.get_pullrequests()
 
-        df['created_at'] = pd.to_datetime(df['created_at'], format='%x')
+        df = pd.DataFrame([s.to_dict() for s in pullrequests()])
+
+        #Todos os PullRequests
+        df['created_at'] = pd.to_datetime(df['created_at'])
+
+        plt.figure(1)
 
         df.groupby(pd.Grouper(key='created_at', freq='5M')).count().reset_index().plot(x='created_at', y='body', color='g')
 
         plt.xlabel('Periódos')
         plt.ylabel('Quantidade')
         plt.title('PullRequests ao longo do Tempo(Angular)')
+
+        #Somente os que tiveram Merge
+
+        df = pd.DataFrame([s.to_dict() for s in pullrequests()])
+
+        with_merged = df[~df.merged_at.isnull()]
+
+        with_merged['merged_at'] = pd.to_datetime(with_merged['merged_at'])
+        with_merged.groupby(pd.Grouper(key='merged_at', freq='5M')).count().reset_index().plot(x='merged_at', y='body', color='g')
+
+        plt.xlabel('Periódos')
+        plt.ylabel('Quantidade')
+        plt.title('PullRequests que tiveram merge')
+
+        plt.figure(2)
 
         plt.show()
 
