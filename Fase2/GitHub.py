@@ -5,6 +5,13 @@ from requests.auth import HTTPBasicAuth
 
 DEFAULT_URL = "https://api.github.com"
 
+
+class Repo:
+    def __init__(self, owner, name):
+        self.owner = owner
+        self.name = name
+
+
 class GitHub:
     def __init__(self, repo):
         self.repo = repo
@@ -32,6 +39,7 @@ class GitHub:
                         mins += 1
             else:
                 print('Você ainda tem {} requisições para se fazer'.format(remaining))
+
 
 class PullRequest:
     def __init__(self, id, url, number, state, title, body, created_at, updated_at=None, closed_at=None, merged_at=None, **args):
