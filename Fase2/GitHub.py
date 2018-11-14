@@ -16,9 +16,33 @@ class GitHub:
     def __init__(self, repo):
         self.repo = repo
 
+    def make_analisys(self):
+        have_content = True
+        page_number = 1       
+        parameters = {'state':'all'}
+
+        while have_content:
+            self.verify_ratelimit()
+
+            url = DEFAULT_URL + ('/repos/%s/%s/pulls?page=%d&per_page=100' % (self.repo.owner, self.repo.name, page_number))
+
+            response = requests.get(url, auth=HTTPBasicAuth('<user>', '<pass>'), params=parameters)
+
+            if response.status_code == 200:
+                json_response = json.loads(response.text)
+
+                print('Repo: {} / N° Pull Requests: {}'.format(self.repo.name, len(json_response)))
+
+                if not json_response:
+                    have_content = False
+                    continue
+                
+                page_number += 1
+            
+
     def verify_ratelimit(self):
         url = DEFAULT_URL + '/rate_limit'
-        response = requests.get(url, auth=HTTPBasicAuth('user','pass'))
+        response = requests.get(url, auth=HTTPBasicAuth('<user>','<pass>'))
 
         if response.status_code == 200:
             json_response = json.loads(response.text)

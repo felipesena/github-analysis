@@ -21,6 +21,7 @@ def top10Repos():
 
 def processRepo(repo):
     github = gh.GitHub(repo)
+    github.make_analisys()
     print('{}/{}'.format(repo.owner, repo.name))
 
 

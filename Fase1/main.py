@@ -113,14 +113,14 @@ class GitHub:
         have_content = True
         page_number = 1
         pullrequests = []
-        parametes = {'state':'all'}
+        parameters = {'state':'all'}
 
         while have_content:
             url = DEFAULT_URL + ('/repos/%s/%s/pulls?page=%d&per_page=100' % (self.owner, self.repo, page_number))
 
             self.get_ratelimit()
 
-            response = requests.get(url, auth=HTTPBasicAuth('user','pass'), params=parametes)
+            response = requests.get(url, auth=HTTPBasicAuth('user','pass'), params=parameters)
 
             if response.status_code == 200:
                 json_response = json.loads(response.text)
