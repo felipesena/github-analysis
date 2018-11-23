@@ -36,9 +36,7 @@ class GitHub:
     def make_analisys_api(self):
         self.get_infos_api()
 
-        file = open(JSON_FILE, 'w')
-        json.dump(self.repo.__dict__, file)
-        file.close()
+        print(self.repo.__dict__)
 
     def get_infos_api(self):
         print('Starting getting repo informations using API...')

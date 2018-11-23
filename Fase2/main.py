@@ -20,7 +20,7 @@ def top10repos():
 
 
 def process_repo(repo):
-    github = gh.GitHub(repo, '25d9bcaf7160e2f2eec7969d7b893b5729701e63')
+    github = gh.GitHub(repo, '02024dd694534f9d77cd73be4be48a0c5828c29c')
     print('{}/{}'.format(repo.owner, repo.name))
     github.make_analisys_api()
 
